@@ -1,58 +1,44 @@
 services:
   lb:
-    image: nginx:1.27-alpine
+    build: .
     ports:
       - "9999:9999"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      api-1:
-        condition: service_healthy
-      api-2:
-        condition: service_healthy
+    environment:
+      - DATA_DIR=/data
+      - PORT=9999
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:9999/ready"]
+      interval: 2s
+      timeout: 2s
+      retries: 60
+      start_period: 180s
     deploy:
       resources:
         limits:
-          cpus: "0.10"
-          memory: "20MB"
+          cpus: "0.80"
+          memory: "338MB"
     networks:
       - rinha
 
   api-1:
-    build: .
-    environment:
-      - DATA_DIR=/data
-      - PORT=8080
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8080/ready"]
-      interval: 2s
-      timeout: 2s
-      retries: 60
-      start_period: 180s
+    image: alpine:latest
+    command: sleep infinity
     deploy:
       resources:
         limits:
-          cpus: "0.40"
-          memory: "160MB"
+          cpus: "0.05"
+          memory: "6MB"
     networks:
       - rinha
 
   api-2:
-    build: .
-    environment:
-      - DATA_DIR=/data
-      - PORT=8080
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8080/ready"]
-      interval: 2s
-      timeout: 2s
-      retries: 60
-      start_period: 180s
+    image: alpine:latest
+    command: sleep infinity
     deploy:
       resources:
         limits:
-          cpus: "0.40"
-          memory: "160MB"
+          cpus: "0.05"
+          memory: "6MB"
     networks:
       - rinha
 

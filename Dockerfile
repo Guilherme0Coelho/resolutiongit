@@ -25,6 +25,6 @@ COPY --from=preprocessor /data/references.bin /data/references.bin
 COPY resources/normalization.json /data/normalization.json
 COPY resources/mcc_risk.json /data/mcc_risk.json
 ENV DATA_DIR=/data
-ENV PORT=9999
-EXPOSE 9999
+ENV PORT=8080
+EXPOSE 8080
 CMD ["fraud-detector"]

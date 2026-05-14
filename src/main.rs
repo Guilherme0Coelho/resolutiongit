@@ -106,10 +106,14 @@ fn handle_connection(stream: &mut std::net::TcpStream, state: &State) {
             }
         };
 
-        if buf[0] == b'G' {
+        let headers = &buf[..header_end];
+        let is_get = headers.starts_with(b"GET");
+        let is_post = headers.starts_with(b"POST");
+
+        if is_get && find_subsequence(headers, b"ready").is_some() {
             let _ = stream.write_all(RESP_READY);
-        } else if buf[0] == b'P' {
-            let content_len = parse_content_length(&buf[..header_end]);
+        } else if is_post && find_subsequence(headers, b"fraud-score").is_some() {
+            let content_len = parse_content_length(headers);
             let body_start = header_end;
             let body_end = body_start + content_len;
 
@@ -122,24 +126,20 @@ fn handle_connection(stream: &mut std::net::TcpStream, state: &State) {
                 filled += n;
             }
 
-            if buf[5] == b'f' {
-                let body = &buf[body_start..body_end];
-                let resp = match vectorize_manual(body, &state.norm, &state.mcc_risk) {
-                    Some(query) => {
-                        let fraud_count = knn_search(&state.dataset, &query);
-                        RESP_OK[fraud_count as usize]
-                    }
-                    None => RESP_404,
-                };
-                let _ = stream.write_all(resp);
-            } else {
-                let _ = stream.write_all(RESP_404);
-            }
+            let body = &buf[body_start..body_end];
+            let resp = match vectorize_manual(body, &state.norm, &state.mcc_risk) {
+                Some(query) => {
+                    let fraud_count = knn_search(&state.dataset, &query);
+                    RESP_OK[fraud_count as usize]
+                }
+                None => RESP_404,
+            };
+            let _ = stream.write_all(resp);
         } else {
             let _ = stream.write_all(RESP_404);
         }
 
-        let consumed = if buf[0] == b'G' {
+        let consumed = if is_get {
             header_end
         } else {
             let cl = parse_content_length(&buf[..header_end]);
@@ -172,13 +172,14 @@ fn find_header_end(buf: &[u8]) -> Option<usize> {
 #[inline]
 fn parse_content_length(headers: &[u8]) -> usize {
     let mut i = 0;
-    while i + 16 < headers.len() {
+    while i + 14 < headers.len() {
         if (headers[i] == b'C' || headers[i] == b'c')
             && (headers[i+8] == b'L' || headers[i+8] == b'l')
-            && headers[i+15] == b' '
+            && headers[i+14] == b':'
         {
+            let mut j = i + 15;
+            while j < headers.len() && headers[j] == b' ' { j += 1; }
             let mut n = 0usize;
-            let mut j = i + 16;
             while j < headers.len() && headers[j] >= b'0' && headers[j] <= b'9' {
                 n = n * 10 + (headers[j] - b'0') as usize;
                 j += 1;
@@ -188,4 +189,10 @@ fn parse_content_length(headers: &[u8]) -> usize {
         i += 1;
     }
     0
+}
+
+#[inline]
+fn find_subsequence(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+    if needle.len() > haystack.len() { return None; }
+    haystack.windows(needle.len()).position(|w| w == needle)
 }

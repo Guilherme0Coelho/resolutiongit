@@ -8,7 +8,7 @@ COPY Cargo.toml Cargo.lock* ./
 COPY src/ ./src/
 
 # x86-64-v3 enables AVX2 SIMD for auto-vectorization of the distance loop
-ENV RUSTFLAGS="-C target-cpu=x86-64-v3"
+ENV RUSTFLAGS="-C opt-level=3"
 RUN cargo build --release
 
 # =============================================================================

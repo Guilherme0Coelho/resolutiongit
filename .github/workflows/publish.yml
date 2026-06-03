@@ -31,6 +31,6 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64
-          tags: ghcr.io/${{ github.repository_owner }}/resolutiongit:latest
+          tags: ghcr.io/guilherme0coelho/resolutiongit:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max

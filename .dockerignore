@@ -1,7 +1,0 @@
-target/
-.git/
-*.md
-*.bin
-download-dataset.sh
-.gitignore
-.dockerignore

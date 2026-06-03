@@ -14,12 +14,12 @@ services:
       resources:
         limits:
           cpus: "0.10"
-          memory: "30MB"
+          memory: "20MB"
     networks:
       - rinha
 
   api-1:
-    build: .
+    image: ghcr.io/guilherme0coelho/resolutiongit:latest
     environment:
       - DATA_DIR=/data
       - PORT=8080
@@ -38,7 +38,7 @@ services:
       - rinha
 
   api-2:
-    build: .
+    image: ghcr.io/guilherme0coelho/resolutiongit:latest
     environment:
       - DATA_DIR=/data
       - PORT=8080
